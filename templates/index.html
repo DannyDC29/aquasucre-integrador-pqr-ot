@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaSucre E.S.P. - Integrador PQR</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f9fafb; color: #333; }
+        h1 { margin-bottom: 5px; }
+        h3 { color: #666; font-weight: normal; margin-top: 0; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+        th { background-color: #f3f4f6; }
+        .alert { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <h1>AquaSucre E.S.P.</h1>
+    <h3>Integrador PQR → Órdenes de Trabajo</h3>
+
+    <div class="card">
+        <h2>PQR registradas</h2>
+        <p>Listado de solicitudes leídas desde la API de Frappe Helpdesk via túnel Cloudflare.</p>
+
+        {% if error %}
+            <div class="alert">{{ error }}</div>
+        {% else %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>PQR</th>
+                        <th>Asunto</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td><strong>{{ ticket.name }}</strong></td>
+                        <td>{{ ticket.subject }}</td>
+                        <td>{{ ticket.status }}</td>
+                        <td>{{ ticket.priority }}</td>
+                        <td>{{ ticket.creation }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">No se encontraron PQR registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</body>
+</html>
