@@ -12,9 +12,9 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
         th { background-color: #f3f4f6; }
-        .alert { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 4px; }
+        .alert { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 4px; margin-bottom: 15px; }
         select, button { padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; }
-        button { background-color: #0284c7; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button { background-color: #0284c7; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
         button:hover { background-color: #0369a1; }
         .form-asignar { display: flex; gap: 8px; align-items: center; }
     </style>
@@ -28,53 +28,53 @@
         <p>Listado de solicitudes leídas desde la API de Frappe Helpdesk via túnel Cloudflare.</p>
 
         {% if error %}
-            <div class="alert">{{ error }}</div>
-        {% else %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>PQR</th>
-                        <th>Asunto</th>
-                        <th>Estado</th>
-                        <th>Prioridad</th>
-                        <th>Fecha</th>
-                        <th>Asignar Técnico</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ticket in tickets %}
-                    <tr>
-                        <td><strong>{{ ticket.name }}</strong></td>
-                        <td>{{ ticket.subject }}</td>
-                        <td>{{ ticket.status }}</td>
-                        <td>{{ ticket.priority }}</td>
-                        <td>{{ ticket.creation }}</td>
-                        <td>
-                            <form action="/asignar" method="POST" class="form-asignar">
-                                <input type="hidden" name="id_pqr" value="{{ ticket.name }}">
-                                <input type="hidden" name="tipo_servicio" value="{{ ticket.subject }}">
-                                <input type="hidden" name="descripcion" value="{{ ticket.subject }}">
-                                <input type="hidden" name="direccion" value="Dirección PQR">
-
-                                <select name="id_tecnico" required>
-                                    <option value="">Seleccionar...</option>
-                                    {% for tec in tecnicos %}
-                                        <option value="{{ tec.id_tecnico }}">{{ tec.nombre }}</option>
-                                    {% endfor %}
-                                </select>
-
-                                <button type="submit">Asignar</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6">No se encontraron PQR registradas.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="alert"><strong>Aviso:</strong> {{ error }}</div>
         {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>PQR</th>
+                    <th>Asunto</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Fecha</th>
+                    <th>Asignar Técnico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td><strong>{{ ticket.name }}</strong></td>
+                    <td>{{ ticket.subject }}</td>
+                    <td>{{ ticket.status }}</td>
+                    <td>{{ ticket.priority }}</td>
+                    <td>{{ ticket.creation }}</td>
+                    <td>
+                        <form action="/asignar" method="POST" class="form-asignar">
+                            <input type="hidden" name="id_pqr" value="{{ ticket.name }}">
+                            <input type="hidden" name="tipo_servicio" value="{{ ticket.subject }}">
+                            <input type="hidden" name="descripcion" value="{{ ticket.subject }}">
+                            <input type="hidden" name="direccion" value="Dirección PQR">
+
+                            <select name="id_tecnico" required>
+                                <option value="">Seleccionar técnico...</option>
+                                {% for tec in tecnicos %}
+                                    <option value="{{ tec.id_tecnico }}">{{ tec.nombre }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <button type="submit">Asignar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6">No se encontraron PQR registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </body>
 </html>

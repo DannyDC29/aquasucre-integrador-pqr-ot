@@ -12,7 +12,10 @@ FRAPPE_API_SECRET = os.environ.get("FRAPPE_API_SECRET")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    db_url = DATABASE_URL
+    if db_url and "channel_binding=" in db_url:
+        db_url = db_url.split("&channel_binding=")[0].split("?channel_binding=")[0]
+    return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
 @app.route("/")
 def index():
@@ -31,25 +34,24 @@ def index():
         if res.status_code == 200:
             tickets = res.json().get("data", [])
         else:
-            error_msg = f"Error en Frappe API: Código HTTP {res.status_code}"
+            error_msg = f"Error al conectar con Frappe (Código: {res.status_code})"
     except Exception as e:
-        error_msg = f"No se pudo conectar con Frappe: {e}"
+        error_msg = f"Error de red con Frappe: {e}"
 
     # 2. Obtener Técnicos desde Neon
     if not DATABASE_URL:
-        db_alert = "ALERTA: La variable DATABASE_URL no existe en Render."
+        db_alert = "DATABASE_URL no está configurada en Render."
         error_msg = f"{error_msg} | {db_alert}" if error_msg else db_alert
     else:
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            # Consultar todos los técnicos registrados independientemente del estado exacto
-            cur.execute("SELECT id_tecnico, nombre, especialidad, estado FROM tecnicos;")
+            cur.execute("SELECT id_tecnico, nombre, especialidad FROM tecnicos;")
             tecnicos = cur.fetchall()
             cur.close()
             conn.close()
         except Exception as e:
-            db_alert = f"Error al conectar con Neon PostgreSQL: {e}"
+            db_alert = f"Error al consultar Neon PostgreSQL: {e}"
             error_msg = f"{error_msg} | {db_alert}" if error_msg else db_alert
 
     return render_template("index.html", tickets=tickets, tecnicos=tecnicos, error=error_msg)
