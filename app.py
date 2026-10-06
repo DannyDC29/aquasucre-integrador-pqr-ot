@@ -17,36 +17,42 @@ def get_db_connection():
 @app.route("/")
 def index():
     tickets = []
-    error = None
+    tecnicos = []
+    error_msg = None
+
+    # 1. Obtener PQRs desde Frappe
     headers = {"Authorization": f"token {FRAPPE_API_KEY}:{FRAPPE_API_SECRET}"}
-    
-    # 1. Obtener PQRs de Frappe
     try:
         res = requests.get(
             f"{FRAPPE_URL}/api/resource/HD Ticket?fields=[\"name\",\"subject\",\"status\",\"priority\",\"creation\"]",
-            headers=headers
+            headers=headers,
+            timeout=8
         )
         if res.status_code == 200:
             tickets = res.json().get("data", [])
         else:
-            error = f"Error al conectar con Frappe (Código: {res.status_code})"
+            error_msg = f"Error en Frappe API: Código HTTP {res.status_code}"
     except Exception as e:
-        error = f"Error de red con Frappe: {e}"
+        error_msg = f"No se pudo conectar con Frappe: {e}"
 
-    # 2. Obtener Técnicos de Neon
-    tecnicos = []
-    try:
-        if DATABASE_URL:
+    # 2. Obtener Técnicos desde Neon
+    if not DATABASE_URL:
+        db_alert = "ALERTA: La variable DATABASE_URL no existe en Render."
+        error_msg = f"{error_msg} | {db_alert}" if error_msg else db_alert
+    else:
+        try:
             conn = get_db_connection()
             cur = conn.cursor()
-            cur.execute("SELECT id_tecnico, nombre, especialidad FROM tecnicos WHERE estado = 'ACTIVO';")
+            # Consultar todos los técnicos registrados independientemente del estado exacto
+            cur.execute("SELECT id_tecnico, nombre, especialidad, estado FROM tecnicos;")
             tecnicos = cur.fetchall()
             cur.close()
             conn.close()
-    except Exception as e:
-        print("Error consultando Neon:", e)
+        except Exception as e:
+            db_alert = f"Error al conectar con Neon PostgreSQL: {e}"
+            error_msg = f"{error_msg} | {db_alert}" if error_msg else db_alert
 
-    return render_template("index.html", tickets=tickets, tecnicos=tecnicos, error=error)
+    return render_template("index.html", tickets=tickets, tecnicos=tecnicos, error=error_msg)
 
 @app.route("/asignar", methods=["POST"])
 def asignar_tecnico():
@@ -56,8 +62,8 @@ def asignar_tecnico():
     descripcion = request.form.get("descripcion", "Revisión técnica de PQR")
     direccion = request.form.get("direccion", "Dirección registrada")
 
-    try:
-        if DATABASE_URL:
+    if DATABASE_URL and id_pqr and id_tecnico:
+        try:
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute("""
@@ -68,8 +74,8 @@ def asignar_tecnico():
             conn.commit()
             cur.close()
             conn.close()
-    except Exception as e:
-        print("Error al guardar en Neon:", e)
+        except Exception as e:
+            print("Error al insertar OT en Neon:", e)
 
     return redirect(url_for("index"))
 
